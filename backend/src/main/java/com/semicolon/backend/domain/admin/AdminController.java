@@ -32,4 +32,4 @@ public class AdminController {
         return ResponseEntity.ok(service.getCount());
     }
 }
-//깃 액션 테스트중
+//깃 액션 테스트중입니다
