@@ -126,6 +126,7 @@ const LessonRequestComponent = ({
         </h3>
         {partnerClass &&
           partnerClass
+            .filter((i) => i !== "헬스")
             .map((i) => (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6 mt-4 text-gray-800 text-base">
                 <label className="flex items-center gap-3 cursor-pointer p-1 hover:bg-blue-100 rounded transition">
