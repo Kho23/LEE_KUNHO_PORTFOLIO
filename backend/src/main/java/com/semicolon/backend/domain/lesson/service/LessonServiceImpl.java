@@ -123,6 +123,7 @@ public class LessonServiceImpl implements LessonService{
         List<Lesson> lessons = lessonRepository.findByPartnerId(member);
 
                 return lessons.stream()
+                        .filter(les->les.getLessonStatus()==LessonStatus.ACCEPTED)
                         .map((i) -> LessonReqDTO.builder()
                         .partnerId(member.getMemberId())
                         .partnerName(member.getMemberName())
