@@ -4,15 +4,11 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'backend/**'
+      - 'backend/**' # backend 폴더가 바뀔 때만 실행
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # [주의] 이 설정은 'run' 명령어에만 적용됨 (uses에는 적용 X)
-    defaults:
-      run:
-        working-directory: ./backend
 
     steps:
     - name: Checkout code
@@ -24,24 +20,26 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    # [수정] backend 폴더로 들어가서 빌드 (가장 확실한 방법)
     - name: Build with Gradle
       run: |
+        cd backend
         chmod +x gradlew
         ./gradlew clean build -x test
 
-    # [디버깅] 파일이 잘 만들어졌는지 확인하는 단계 (working-directory 무시하고 루트에서 실행하기 위해 .. 사용하거나 절대경로 확인)
+    # [추가] 파일이 잘 생겼는지 눈으로 확인 (디버깅용)
     - name: Check build result
-      if: always() # 빌드가 실패해도 실행해서 로그 확인
       run: |
-        ls -al build/libs
+        echo "📂 생성된 JAR 파일 확인:"
+        ls -al backend/build/libs
 
+    # [수정] backend/build/libs 경로 그대로 사용
     - name: Copy JAR to EC2
       uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
-        # [수정] 점(.) 제거하고 명확하게 경로 지정
         source: "backend/build/libs/*.jar"
         target: "/home/ubuntu/app"
         strip_components: 3
@@ -53,4 +51,12 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         script: |
+          # 1. 기존 파일 정리
+          rm -f /home/ubuntu/backend-0.0.1-SNAPSHOT.jar
+          
+          # 2. 전송된 파일을 홈 디렉토리로 이동 및 이름 변경
+          mv /home/ubuntu/app/*.jar /home/ubuntu/backend-0.0.1-SNAPSHOT.jar
+          
+          # 3. deploy.sh 실행 권한 부여 및 실행
+          chmod +x ./deploy.sh
           ./deploy.sh
