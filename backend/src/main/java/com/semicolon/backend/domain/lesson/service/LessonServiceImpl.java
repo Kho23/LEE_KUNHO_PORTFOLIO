@@ -207,6 +207,7 @@ public class LessonServiceImpl implements LessonService{
         List<LessonListResDTO> dtoList=result.getContent().stream()
                 .filter(les->les.getLessonStatus()==LessonStatus.ACCEPTED)
                 .map(lesson ->{
+                    log.info("jar 반영되는지 확인중");
                     Long current=registrationRepository.countByLesson_IdAndStatus(lesson.getId(), RegistrationStatus.APPLIED);
                     LocalDate end = lesson.getStartDate().minusDays(3);
                         LessonListResDTO resDTO= LessonListResDTO.builder()
