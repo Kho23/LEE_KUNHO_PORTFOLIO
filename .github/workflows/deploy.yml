@@ -51,12 +51,12 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         script: |
-          # 1. 기존 파일 정리
-          rm -f /home/ubuntu/backend-0.0.1-SNAPSHOT.jar
+          # 1. app 폴더에 들어온 project.jar를 실행 위치로 이동시키며 이름 변경
+          # -f 옵션은 기존 파일이 있으면 강제로 덮어쓰라는 뜻입니다.
+          mv -f /home/ubuntu/app/project.jar /home/ubuntu/backend-0.0.1-SNAPSHOT.jar
           
-          # 2. 전송된 파일을 홈 디렉토리로 이동 및 이름 변경
-          mv /home/ubuntu/app/*.jar /home/ubuntu/backend-0.0.1-SNAPSHOT.jar
+          # 2. 실행 권한 부여 (혹시 모르니 한번 더)
+          chmod +x /home/ubuntu/deploy.sh
           
-          # 3. deploy.sh 실행 권한 부여 및 실행
-          chmod +x ./deploy.sh
+          # 3. 배포 스크립트 실행
           ./deploy.sh
