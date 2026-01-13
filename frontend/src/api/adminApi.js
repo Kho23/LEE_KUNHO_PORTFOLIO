@@ -7,7 +7,8 @@ export const programModify = async (programId, data) => {
   const res = await axios.put(str, data);
   console.log("backend로부터 온데이터 ", res.data);
   return res.data;
-};
+}; //정상작동중?
+
 
 export const modifyNotice = async (notice) => {
   console.log("notice!!!!!!!!!", notice);
