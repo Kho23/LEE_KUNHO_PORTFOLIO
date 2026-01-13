@@ -4,54 +4,53 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'backend/**' # 백엔드 폴더가 바뀔 때만 실행됨
+      - 'backend/**'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # [중요] 모든 작업의 기준 디렉토리를 'backend'로 설정
+    # [주의] 이 설정은 'run' 명령어에만 적용됨 (uses에는 적용 X)
     defaults:
       run:
         working-directory: ./backend
 
     steps:
-      # 1. 코드 가져오기
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      # 2. 자바 설치 (Java 17)
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      # 3. 빌드 (경로는 위에서 defaults로 설정했으므로 바로 실행 가능)
-      - name: Build with Gradle
-        run: |
-          chmod +x gradlew
-          ./gradlew clean build -x test
+    - name: Build with Gradle
+      run: |
+        chmod +x gradlew
+        ./gradlew clean build -x test
 
-      # 4. 파일 전송 (SCP)
-      - name: Copy JAR to EC2
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          # 빌드된 파일 위치도 backend/가 붙어있음
-          source: "./backend/build/libs/*.jar"
-          target: "/home/ubuntu/app"
-          strip_components: 3 # backend/build/libs/ 3단계를 벗겨냄
+    # [디버깅] 파일이 잘 만들어졌는지 확인하는 단계 (working-directory 무시하고 루트에서 실행하기 위해 .. 사용하거나 절대경로 확인)
+    - name: Check build result
+      if: always() # 빌드가 실패해도 실행해서 로그 확인
+      run: |
+        ls -al build/libs
 
-      # 5. 실행 (SSH)
-      - name: Execute Deploy Script
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          script: |
-            # 기존 실행 중인 서버 종료 등 배포 스크립트 실행
-            # (서버에 있는 deploy.sh 파일 내용도 경로 확인 필요할 수 있음)
-            ./deploy.sh
+    - name: Copy JAR to EC2
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        # [수정] 점(.) 제거하고 명확하게 경로 지정
+        source: "backend/build/libs/*.jar"
+        target: "/home/ubuntu/app"
+        strip_components: 3
+
+    - name: Execute Deploy Script
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        script: |
+          ./deploy.sh
