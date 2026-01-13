@@ -1,0 +1,35 @@
+.fc {
+  font-family: Pretendard, sans-serif;
+}
+/* 요일 스타일 */
+.fc-col-header-cell {
+  font-weight: 500;
+  font-size: 14px;
+}
+.fc-daygrid-day {
+  height: 80px;
+  cursor: pointer;
+}
+/* 주말 색상 */
+.fc-day-sun {
+  color: #e83c3c !important;
+}
+.fc-day-sat {
+  color: #1d5edb !important;
+}
+/* Hover */
+.fc-daygrid-day:hover {
+  background: #f6f6f6;
+}
+/* Disabled 날짜 */
+.cell-disabled {
+  background: #eee !important;
+  pointer-events: none;
+}
+.selected-date {
+  background-color: #ffffff !important;
+  color: #1e3a8a !important;
+  border: 2px solid #1e3a8a !important;
+  border-radius: 6px;
+  font-weight: 600;
+}

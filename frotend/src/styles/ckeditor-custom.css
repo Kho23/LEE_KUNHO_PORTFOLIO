@@ -1,0 +1,89 @@
+/* ===============================
+   CKEDITOR STYLING (ADMIN EDITOR)
+   =============================== */
+
+/* 에디터 내부 텍스트 기본 스타일 */
+.ck-editor__editable {
+  min-height: 400px !important;
+  font-family: "Pretendard", "Noto Sans KR", sans-serif !important;
+  font-size: 16px !important;
+  line-height: 1.75 !important;
+  color: #374151 !important; /* text-gray-700 */
+  padding: 1rem !important;
+}
+
+.ck-editor__editable_inline {
+  min-height: 400px;
+  max-height: 800px;
+}
+
+/* 제목 스타일 */
+.ck-content h1 {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  margin-top: 1.2rem !important;
+  margin-bottom: 0.6rem !important;
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.ck-content h2 {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #1f2937 !important; /* text-gray-800 */
+}
+
+.ck-content h3 {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  margin-top: 0.8rem !important;
+  margin-bottom: 0.4rem !important;
+}
+
+/* 표 스타일 */
+.ck-content table {
+  border-collapse: collapse !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.ck-content table td,
+.ck-content table th {
+  border: 1px solid #d1d5db !important; /* gray-300 */
+  padding: 8px 12px !important;
+  text-align: center !important;
+}
+
+.ck-content table th {
+  background-color: #f3f4f6 !important; /* gray-100 */
+  font-weight: 600 !important;
+}
+
+/* 리스트 스타일 */
+.ck-content ul,
+.ck-content ol {
+  padding-left: 1.2rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.ck-content li {
+  margin-bottom: 4px !important;
+}
+
+/* 인용문 스타일 */
+.ck-content blockquote {
+  border-left: 4px solid #3b82f6 !important; /* blue-500 */
+  padding-left: 1rem !important;
+  margin: 1rem 0 !important;
+  color: #4b5563 !important; /* gray-600 */
+}
+
+/* 이미지 스타일 */
+.ck-content img {
+  max-width: 100% !important;
+  border-radius: 8px !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+}
