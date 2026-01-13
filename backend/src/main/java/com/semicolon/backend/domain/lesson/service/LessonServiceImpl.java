@@ -123,7 +123,6 @@ public class LessonServiceImpl implements LessonService{
         List<Lesson> lessons = lessonRepository.findByPartnerId(member);
 
                 return lessons.stream()
-                        .filter(les->les.getLessonStatus()==LessonStatus.ACCEPTED)
                         .map((i) -> LessonReqDTO.builder()
                         .partnerId(member.getMemberId())
                         .partnerName(member.getMemberName())
@@ -205,31 +204,33 @@ public class LessonServiceImpl implements LessonService{
             myRegisteredIds = registrationRepository.findRegisteredLessonId(loginId);
         }
         List<Long> finalList = myRegisteredIds;
-        List<LessonListResDTO> dtoList=result.getContent().stream().map(lesson ->{
-            Long current=registrationRepository.countByLesson_IdAndStatus(lesson.getId(), RegistrationStatus.APPLIED);
-            LocalDate end = lesson.getStartDate().minusDays(3);
-                    LessonListResDTO resDTO= LessonListResDTO.builder()
-                        .lessonId(lesson.getId())
-                        .status(lesson.getLessonStatus())
-                        .level(lesson.getLevel())
-                        .description(lesson.getDescription())
-                        .category(lesson.getFacilitySpace().getFacility().getFacilityName())
-                        .startDate(lesson.getStartDate())
-                        .endDate(lesson.getEndDate())
-                        .title(lesson.getTitle())
-                        .partnerName(lesson.getPartnerId().getMemberName())
-                        .facilityType(lesson.getFacilitySpace().getSpaceName())
-                        .startTime(lesson.getSchedules().get(0).getStartTime())
-                        .endTime(lesson.getSchedules().get(0).getEndTime())
-                        .days(lesson.getSchedules().get(0).getLessonDay().stream().map(
-                lessonDay -> lessonDay.getLabel()).toList())
-                        .isRegistered(finalList.contains(lesson.getId()))
-                        .maxPeople(lesson.getMaxPeople())
-                        .minPeople(lesson.getMinPeople())
-                        .currentPeople(current)
-                        .regEndDate(end)
-                        .price(lesson.getPrice())
-                        .build();
+        List<LessonListResDTO> dtoList=result.getContent().stream()
+                .filter(les->les.getLessonStatus()==LessonStatus.ACCEPTED)
+                .map(lesson ->{
+                    Long current=registrationRepository.countByLesson_IdAndStatus(lesson.getId(), RegistrationStatus.APPLIED);
+                    LocalDate end = lesson.getStartDate().minusDays(3);
+                        LessonListResDTO resDTO= LessonListResDTO.builder()
+                            .lessonId(lesson.getId())
+                            .status(lesson.getLessonStatus())
+                            .level(lesson.getLevel())
+                            .description(lesson.getDescription())
+                            .category(lesson.getFacilitySpace().getFacility().getFacilityName())
+                            .startDate(lesson.getStartDate())
+                            .endDate(lesson.getEndDate())
+                            .title(lesson.getTitle())
+                            .partnerName(lesson.getPartnerId().getMemberName())
+                            .facilityType(lesson.getFacilitySpace().getSpaceName())
+                            .startTime(lesson.getSchedules().get(0).getStartTime())
+                            .endTime(lesson.getSchedules().get(0).getEndTime())
+                            .days(lesson.getSchedules().get(0).getLessonDay().stream().map(
+                        lessonDay -> lessonDay.getLabel()).toList())
+                            .isRegistered(finalList.contains(lesson.getId()))
+                            .maxPeople(lesson.getMaxPeople())
+                            .minPeople(lesson.getMinPeople())
+                            .currentPeople(current)
+                            .regEndDate(end)
+                            .price(lesson.getPrice())
+                            .build();
                     resDTO.checkEndDate();
                     return resDTO;
         })
