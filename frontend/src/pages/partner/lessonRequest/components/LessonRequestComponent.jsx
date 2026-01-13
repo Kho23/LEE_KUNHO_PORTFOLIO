@@ -133,7 +133,7 @@ const LessonRequestComponent = ({
                   <input
                     type="radio"
                     name="facilityType"
-                    value={className?.find((j) => j.id == i)?.name}
+                    value={i === "수영" ? "POOL" : i === "골프" ? "GOLF" : i === "풋살" ? "FUTSAL" : "DANCE"}
                     onClick={(e) => formChangeHandler(e)}
                     className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition"
                   />
@@ -302,11 +302,10 @@ const LessonRequestComponent = ({
           <div
             key={i.spaceId}
             className={`p-4 border rounded-lg mb-3
-      ${
-        form.facilityRoomType == i.spaceId
-          ? "border-blue-600 bg-blue-50"
-          : "border-gray-200"
-      }
+      ${form.facilityRoomType == i.spaceId
+                ? "border-blue-600 bg-blue-50"
+                : "border-gray-200"
+              }
     `}
           >
             <div className="flex justify-between items-center">
