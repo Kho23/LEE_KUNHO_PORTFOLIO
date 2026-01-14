@@ -21,14 +21,14 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # 1. 빌드
+    # 1. 빌드 (backend 폴더 진입)
     - name: Build with Gradle
       run: |
         cd backend
         chmod +x gradlew
         ./gradlew clean bootJar -x test
 
-    # 2. 파일 수집
+    # 2. 파일 준비 (최상위로 복사)
     - name: Prepare files for transfer
       run: |
         find . -name "backend-0.0.1-SNAPSHOT.jar" -exec cp {} ./project.jar \;
@@ -47,7 +47,7 @@ jobs:
         source: "project.jar,deploy.sh"
         target: "/home/ubuntu/app"
 
-    # 4. 서버에서 스크립트 실행
+    # 4. 서버에서 스크립트 실행 (백그라운드 유지 설정 추가)
     - name: Execute Deploy Script
       uses: appleboy/ssh-action@master
       with:
@@ -55,28 +55,17 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         port: 22
-        # 중요: 변수 사이에 공백 없이 콤마로만 연결해야 합니다.
         envs: RDS_URL,RDS_USERNAME,RDS_PASSWORD,GOOGLE_KEY,JWT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,IAMPORT_API_KEY,IAMPORT_API_SECRET
         script: |
-          mkdir -p /home/ubuntu/app
           cd /home/ubuntu/app
+          sed -i 's/\r$//' deploy.sh
+          chmod +x deploy.sh
           
-          if [ -f "deploy.sh" ]; then
-            sed -i 's/\r$//' deploy.sh
-            chmod +x deploy.sh
-            sed -i 's/JAR_NAME=.*/JAR_NAME="project.jar"/' deploy.sh
-            
-            # 환경변수가 비어있는지 마지막으로 확인 (디버깅용)
-            if [ -z "$RDS_URL" ]; then
-              echo "❌ 에러: RDS_URL 환경변수가 서버에 전달되지 않았습니다."
-              exit 1
-            fi
-            
-            ./deploy.sh
-          else
-            echo "❌ 에러: deploy.sh 파일이 없습니다."
-            exit 1
-          fi
+          # 깃허브 액션 세션이 끊겨도 프로세스가 죽지 않게 nohup으로 실행
+          nohup ./deploy.sh > /dev/null 2>&1 &
+          
+          # 스크립트가 실행될 최소한의 시간 확보
+          sleep 3
       env:
         RDS_URL: ${{ secrets.RDS_URL }}
         RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
