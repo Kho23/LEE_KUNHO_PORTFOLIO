@@ -11,7 +11,7 @@ spring:
     # [중요] EC2 안에 MySQL을 설치했다면 localhost 유지, RDS라면 RDS 엔드포인트 주소로 변경
     url: jdbc:mysql://semicolon.cr4qiye0ey8n.ap-northeast-2.rds.amazonaws.com:3306/semicolon
     username: wndrn2002
-    password: ${DB_PASSWORD} # 실행할 때 입력받음
+    password: ${DB_PASSWORD} # 실행할 때 입력받음 dasdasdas
 
   jpa:
     hibernate:
