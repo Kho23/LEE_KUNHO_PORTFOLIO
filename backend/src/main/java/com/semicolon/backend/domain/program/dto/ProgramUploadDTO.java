@@ -10,7 +10,6 @@ import lombok.*;
 @ToString
 public class ProgramUploadDTO {
     private long fileNo;
-
     private String fileName;
     private String filePath;
     private String savedName;
