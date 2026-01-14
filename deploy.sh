@@ -24,7 +24,7 @@ echo "Moving to app directory..."
 cd $APP_DIR || exit 1
 
 echo "Starting Backend Server..."
-# 1. 모든 환경변수를 따옴표로 감싸서 공백/특수문자 에러 방지
+# 1. 모든 환경변수를 따옴표로 감싸서 공백/특수문자 에러 방지ㅇㅁㄴㅇㄴㅁㅇㅁㄴ
 # 2. 실행 끝에 & 를 붙이고 disown을 실행해서 터미널 종료에 영향 안 받게 함
 nohup java -jar $JAR_NAME \
   --spring.profiles.active=prod \
