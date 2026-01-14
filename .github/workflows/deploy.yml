@@ -3,66 +3,50 @@ name: Backend Deploy to EC2
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - 'backend/**'
-      - 'deploy.sh'
-      - '.github/workflows/**'  # 설정 파일 변경 시에도 액션이 실행되도록 추가
+    paths-ignore:
+      - 'README.md'
+      - '.gitignore'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. 코드 체크아웃
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # 2. JDK 17 설치
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
 
-    # 3. Gradle 빌드
+    # 1. 빌드 (backend 폴더 진입)
     - name: Build with Gradle
       run: |
         cd backend
         chmod +x gradlew
         ./gradlew clean bootJar -x test
 
-    # 4. [중요] 파일을 밖으로 꺼내서 경로 문제 해결
-    - name: Move JAR to Root
+    # 2. [파일 준비] JAR와 스크립트를 최상위로 복사
+    - name: Prepare files for transfer
       run: |
-        # 파일명을 project.jar로 통일해서 경로 복잡성을 없앱니다.
-        mv backend/build/libs/backend-0.0.1-SNAPSHOT.jar ./project.jar
-        echo "✅ JAR 파일 준비 완료"
-        ls -al project.jar
+        find . -name "backend-0.0.1-SNAPSHOT.jar" -exec cp {} ./project.jar \;
+        find . -name "deploy.sh" -exec cp {} ./deploy.sh \;
+        echo "📂 전송 준비 완료"
 
-    # 5. JAR 파일 전송 (파일 이름만 딱 지정)
-    - name: Copy JAR to EC2
+    # 3. 파일 전송
+    - name: Copy Files to EC2
       uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         port: 22
-        source: "project.jar"
-        target: "/home/ubuntu/app"
-        # 최상위 파일을 보내므로 strip_components는 필요 없습니다.
-
-    # 6. deploy.sh 스크립트 전송
-    - name: Copy Script to EC2
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
-        port: 22
-        source: "deploy.sh"
+        source: "project.jar,deploy.sh"
         target: "/home/ubuntu/app"
 
-    # 7. 원격 서버에서 배포 스크립트 실행
+    # 4. 서버에서 스크립트 실행 (기존 변수명 그대로 주입)
     - name: Execute Deploy Script
       uses: appleboy/ssh-action@master
       with:
@@ -70,13 +54,23 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         port: 22
+        # envs에 적는 이름이 deploy.sh에서 사용될 변수명입니다.
+        envs: RDS_URL,RDS_USERNAME,RDS_PASSWORD,GOOGLE_KEY,JWT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,IAMPORT_API_KEY,IAMPORT_API_SECRET
         script: |
-          # 윈도우 줄바꿈 문자 제거 및 권한 부여
-          sed -i 's/\r$//' /home/ubuntu/app/deploy.sh
-          chmod +x /home/ubuntu/app/deploy.sh
-          
-          # deploy.sh 내의 JAR_NAME 변수를 project.jar로 강제 고정 (오타 방지)
-          sed -i 's/JAR_NAME=.*/JAR_NAME="project.jar"/' /home/ubuntu/app/deploy.sh
-          
-          # 배포 실행
-          /home/ubuntu/app/deploy.sh
+          cd /home/ubuntu/app
+          sed -i 's/\r$//' deploy.sh
+          chmod +x deploy.sh
+          sed -i 's/JAR_NAME=.*/JAR_NAME="project.jar"/' deploy.sh
+          ./deploy.sh
+      env:
+        RDS_URL: ${{ secrets.RDS_URL }}
+        RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
+        RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
+        GOOGLE_KEY: ${{ secrets.GOOGLE_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+        KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+        NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+        NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        IAMPORT_API_KEY: ${{ secrets.IAMPORT_API_KEY }}
+        IAMPORT_API_SECRET: ${{ secrets.IAMPORT_API_SECRET }}
