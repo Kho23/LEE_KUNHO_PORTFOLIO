@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +39,7 @@ import java.util.NoSuchElementException;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class LessonServiceImpl implements LessonService{
+public class LessonServiceImpl implements LessonService {
 
     @Autowired
     private ModelMapper mapper;
@@ -78,7 +76,7 @@ public class LessonServiceImpl implements LessonService{
             }
         }
 
-    // ★ targetDays 의 모든 날짜에 대해 예약 가능 여부 검사
+        // ★ targetDays 의 모든 날짜에 대해 예약 가능 여부 검사
         for (LocalDate d : targetDays) {
             LocalDateTime s = LocalDateTime.of(d, lessonReqDTO.getStartTime());
             LocalDateTime e = LocalDateTime.of(d, lessonReqDTO.getEndTime());
@@ -122,8 +120,8 @@ public class LessonServiceImpl implements LessonService{
 
         List<Lesson> lessons = lessonRepository.findByPartnerId(member);
 
-                return lessons.stream()
-                        .map((i) -> LessonReqDTO.builder()
+        return lessons.stream()
+                .map((i) -> LessonReqDTO.builder()
                         .partnerId(member.getMemberId())
                         .partnerName(member.getMemberName())
                         .title(i.getTitle())
@@ -150,32 +148,34 @@ public class LessonServiceImpl implements LessonService{
     @Override
     public PageResponseDTO<LessonListResDTO> getAllLessonList(PageRequestDTO dto, String loginId) {
         Sort sort = Sort.by("id").descending();
-        if(dto.getSort()!=null){
-            switch (dto.getSort()){
-                case "LATEST" : sort = Sort.by("startDate").ascending();
-                break;
-                case "FASTEST" : sort = Sort.by("startDate").descending();
+        if (dto.getSort() != null) {
+            switch (dto.getSort()) {
+                case "LATEST":
+                    sort = Sort.by("startDate").ascending();
+                    break;
+                case "FASTEST":
+                    sort = Sort.by("startDate").descending();
             }
         }
-        Pageable pageable = PageRequest.of(dto.getPage()-1, dto.getSize(), sort);
+        Pageable pageable = PageRequest.of(dto.getPage() - 1, dto.getSize(), sort);
         String titleKeyword = null;
         String partnerKeyword = null;
         String keyword = dto.getKeyword();
-        if(keyword!=null && !keyword.isEmpty()){
-            if("t".equals(dto.getType())){
-                titleKeyword=dto.getKeyword();
+        if (keyword != null && !keyword.isEmpty()) {
+            if ("t".equals(dto.getType())) {
+                titleKeyword = dto.getKeyword();
             } else if ("c".equals(dto.getType())) {
-                partnerKeyword=dto.getKeyword();
-            }else{
+                partnerKeyword = dto.getKeyword();
+            } else {
                 titleKeyword = dto.getKeyword();
                 partnerKeyword = dto.getKeyword();
             }
         }
         List<LessonDay> targetDays = new ArrayList<>();
-        if(dto.getDays()!=null && !dto.getDays().isEmpty()){
-            targetDays = dto.getDays().stream().map(i->LessonDay.valueOf(i)).toList();
-        }else{
-            targetDays=Arrays.asList(LessonDay.values());
+        if (dto.getDays() != null && !dto.getDays().isEmpty()) {
+            targetDays = dto.getDays().stream().map(i -> LessonDay.valueOf(i)).toList();
+        } else {
+            targetDays = Arrays.asList(LessonDay.values());
         }
 
         String startTimeStr = null;
@@ -199,18 +199,17 @@ public class LessonServiceImpl implements LessonService{
                 pageable
         );
         List<Long> myRegisteredIds = new ArrayList<>();
-        if(loginId != null && !loginId.isEmpty()){
+        if (loginId != null && !loginId.isEmpty()) {
             // 로그인한 유저가 신청한 레슨 ID 목록 가져오기
             myRegisteredIds = registrationRepository.findRegisteredLessonId(loginId);
         }
         List<Long> finalList = myRegisteredIds;
-        List<LessonListResDTO> dtoList=result.getContent().stream()
-                .filter(les->les.getLessonStatus()==LessonStatus.ACCEPTED)
-                .map(lesson ->{
-                    log.info("jar 반영되는지 확인중");
-                    Long current=registrationRepository.countByLesson_IdAndStatus(lesson.getId(), RegistrationStatus.APPLIED);
+        List<LessonListResDTO> dtoList = result.getContent().stream()
+                .filter(les -> les.getLessonStatus() == LessonStatus.ACCEPTED)
+                .map(lesson -> {
+                    Long current = registrationRepository.countByLesson_IdAndStatus(lesson.getId(), RegistrationStatus.APPLIED);
                     LocalDate end = lesson.getStartDate().minusDays(3);
-                        LessonListResDTO resDTO= LessonListResDTO.builder()
+                    LessonListResDTO resDTO = LessonListResDTO.builder()
                             .lessonId(lesson.getId())
                             .status(lesson.getLessonStatus())
                             .level(lesson.getLevel())
@@ -224,7 +223,7 @@ public class LessonServiceImpl implements LessonService{
                             .startTime(lesson.getSchedules().get(0).getStartTime())
                             .endTime(lesson.getSchedules().get(0).getEndTime())
                             .days(lesson.getSchedules().get(0).getLessonDay().stream().map(
-                        lessonDay -> lessonDay.getLabel()).toList())
+                                    lessonDay -> lessonDay.getLabel()).toList())
                             .isRegistered(finalList.contains(lesson.getId()))
                             .maxPeople(lesson.getMaxPeople())
                             .minPeople(lesson.getMinPeople())
@@ -234,8 +233,8 @@ public class LessonServiceImpl implements LessonService{
                             .build();
                     resDTO.checkEndDate();
                     return resDTO;
-        })
-                        .toList();
+                })
+                .toList();
 
         return PageResponseDTO.<LessonListResDTO>withAll()
                 .dtoList(dtoList)
@@ -308,7 +307,7 @@ public class LessonServiceImpl implements LessonService{
 
     @Override
     public LessonListResDTO adminGetOneLesson(Long id) {
-        Lesson lesson =lessonRepository.findById(id).orElseThrow(()->new IllegalArgumentException("해당 id에 일치하는 강의가 없습니다."));
+        Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("해당 id에 일치하는 강의가 없습니다."));
         return LessonListResDTO.builder()
                 .lessonId(lesson.getId())
                 .status(lesson.getLessonStatus())
@@ -329,13 +328,13 @@ public class LessonServiceImpl implements LessonService{
 
     @Override
     public LessonListResDTO getOneLesson(Long id, String loginId) {
-        Lesson lesson =lessonRepository.findById(id).orElseThrow(()->new IllegalArgumentException("해당 id에 일치하는 강의가 없습니다."));
+        Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("해당 id에 일치하는 강의가 없습니다."));
         List<Long> myRegisteredIds = new ArrayList<>();
-        if(loginId!=null && !loginId.isEmpty()){
+        if (loginId != null && !loginId.isEmpty()) {
             myRegisteredIds = registrationRepository.findRegisteredLessonId(loginId);
         }
         List<Long> finalList = myRegisteredIds;
-        Long current=registrationRepository.countByLesson_IdAndStatus(lesson.getId(), RegistrationStatus.APPLIED);
+        Long current = registrationRepository.countByLesson_IdAndStatus(lesson.getId(), RegistrationStatus.APPLIED);
         LocalDate end = lesson.getStartDate().minusDays(3);
         return LessonListResDTO.builder()
                 .price(lesson.getPrice())
@@ -457,7 +456,7 @@ public class LessonServiceImpl implements LessonService{
 
     @Override
     public void changeStatus(LessonStatusDTO dto) {
-        Lesson lesson = lessonRepository.findById(dto.getId()).orElseThrow(()->new IllegalArgumentException("존재하지 않는 강의입니다."));
+        Lesson lesson = lessonRepository.findById(dto.getId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의입니다."));
         lesson.setPrice(dto.getPrice());
         lesson.setLessonStatus(dto.getStatus());
         lessonRepository.save(lesson);

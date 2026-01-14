@@ -4,7 +4,8 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'backend/**' # backend 폴더가 바뀔 때만 실행
+      - 'backend/**'    # 백엔드 코드가 바뀌거나
+      - 'deploy.sh'     # 배포 스크립트가 바뀌면 실행
 
 jobs:
   build-and-deploy:
@@ -20,20 +21,20 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # [수정] backend 폴더로 들어가서 빌드 (가장 확실한 방법)
+    # 1. Gradle 빌드 (backend 폴더에서 실행)
     - name: Build with Gradle
       run: |
         cd backend
         chmod +x gradlew
         ./gradlew clean build -x test
 
-    # [추가] 파일이 잘 생겼는지 눈으로 확인 (디버깅용)
+    # 2. 빌드 결과 확인 (로그용)
     - name: Check build result
       run: |
         echo "📂 생성된 JAR 파일 확인:"
         ls -al backend/build/libs
 
-    # [수정] backend/build/libs 경로 그대로 사용
+    # 3. JAR 파일 전송 (껍데기 폴더 벗겨내고 알맹이만)
     - name: Copy JAR to EC2
       uses: appleboy/scp-action@master
       with:
@@ -44,6 +45,17 @@ jobs:
         target: "/home/ubuntu/app"
         strip_components: 3
 
+    # 4. deploy.sh 스크립트 전송 (루트 폴더에 있는 것)
+    - name: Copy Script to EC2
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        source: "deploy.sh"
+        target: "/home/ubuntu/app"
+
+    # 5. 원격 서버에서 배포 스크립트 실행
     - name: Execute Deploy Script
       uses: appleboy/ssh-action@master
       with:
@@ -51,12 +63,14 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         script: |
-          # 1. app 폴더에 들어온 project.jar를 실행 위치로 이동시키며 이름 변경
-          # -f 옵션은 기존 파일이 있으면 강제로 덮어쓰라는 뜻입니다.
-          mv -f /home/ubuntu/app/project.jar /home/ubuntu/backend-0.0.1-SNAPSHOT.jar
+          # 혹시 모를 plain 파일(껍데기) 삭제
+          rm -f /home/ubuntu/app/*-plain.jar
           
-          # 2. 실행 권한 부여 (혹시 모르니 한번 더)
-          chmod +x /home/ubuntu/deploy.sh
+          # 윈도우 작성 파일 줄바꿈 문자(\r) 제거 (에러 방지용 안전장치)
+          sed -i 's/\r$//' /home/ubuntu/app/deploy.sh
           
-          # 3. 배포 스크립트 실행
-          ./deploy.sh
+          # 실행 권한 부여
+          chmod +x /home/ubuntu/app/deploy.sh
+          
+          # 스크립트 실행
+          /home/ubuntu/app/deploy.sh
