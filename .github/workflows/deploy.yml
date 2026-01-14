@@ -28,14 +28,16 @@ jobs:
         chmod +x gradlew
         ./gradlew clean bootJar -x test
 
-    # 2. [파일 준비] JAR와 스크립트를 최상위로 복사
+    # 2. [파일 준비] 내 컴퓨터 안의 파일들을 최상위로 모으기
     - name: Prepare files for transfer
       run: |
         find . -name "backend-0.0.1-SNAPSHOT.jar" -exec cp {} ./project.jar \;
+        # 내 컴퓨터 프로젝트 루트에 있는 deploy.sh를 찾아서 복사
         find . -name "deploy.sh" -exec cp {} ./deploy.sh \;
-        echo "📂 전송 준비 완료"
+        echo "📂 내 컴퓨터에서 준비된 파일:"
+        ls -al project.jar deploy.sh
 
-    # 3. 파일 전송
+    # 3. 파일 전송 (서버의 /home/ubuntu/app/ 폴더로 전송)
     - name: Copy Files to EC2
       uses: appleboy/scp-action@master
       with:
@@ -46,7 +48,7 @@ jobs:
         source: "project.jar,deploy.sh"
         target: "/home/ubuntu/app"
 
-    # 4. 서버에서 스크립트 실행 (전달받은 Secrets 주입)
+    # 4. 서버에서 스크립트 실행
     - name: Execute Deploy Script
       uses: appleboy/ssh-action@master
       with:
@@ -56,11 +58,25 @@ jobs:
         port: 22
         envs: RDS_URL,RDS_USERNAME,RDS_PASSWORD,GOOGLE_KEY,JWT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,NAVER_CLIENT_ID,NAVER_CLIENT_SECRET,IAMPORT_API_KEY,IAMPORT_API_SECRET
         script: |
+          # 서버 폴더가 없으면 생성하고 진입
+          mkdir -p /home/ubuntu/app
           cd /home/ubuntu/app
-          sed -i 's/\r$//' deploy.sh
-          chmod +x deploy.sh
-          sed -i 's/JAR_NAME=.*/JAR_NAME="project.jar"/' deploy.sh
-          ./deploy.sh
+          
+          # 전송된 파일이 있는지 목록 확인 (로그용)
+          echo "📂 서버에 들어온 파일 목록:"
+          ls -al
+          
+          # deploy.sh 파일이 보이면 실행
+          if [ -f "deploy.sh" ]; then
+            sed -i 's/\r$//' deploy.sh
+            chmod +x deploy.sh
+            # 스크립트 내 JAR_NAME을 project.jar로 자동 수정
+            sed -i 's/JAR_NAME=.*/JAR_NAME="project.jar"/' deploy.sh
+            ./deploy.sh
+          else
+            echo "❌ 에러: 서버에 deploy.sh 파일이 없습니다. 전송 단계를 확인하세요."
+            exit 1
+          fi
       env:
         RDS_URL: ${{ secrets.RDS_URL }}
         RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
