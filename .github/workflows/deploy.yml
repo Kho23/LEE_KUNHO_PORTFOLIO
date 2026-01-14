@@ -6,6 +6,7 @@ on:
     paths:
       - 'backend/**'
       - 'deploy.sh'
+      - '.github/workflows/**'  # [추가] 이제 액션 파일만 고쳐도 실행됨!
 
 jobs:
   build-and-deploy:
@@ -23,20 +24,22 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    # 3. Gradle 빌드 (tar 에러 해결의 핵심!)
+    # 3. Gradle 빌드
     - name: Build with Gradle
       run: |
         cd backend
         chmod +x gradlew
         ./gradlew clean bootJar -x test
 
-    # 4. 빌드 결과 확인 (디버깅용)
-    - name: Check build result
+    # 4. [핵심] 빌드된 JAR 파일을 밖으로 꺼내고 이름도 단순하게 변경
+    - name: Move JAR to Root
       run: |
-        echo "📂 JAR 파일 위치 확인:"
-        ls -al backend/build/libs
+        # 깊숙이 있는 파일을 최상위(.)로 꺼내면서 project.jar로 이름 변경
+        mv backend/build/libs/backend-0.0.1-SNAPSHOT.jar ./project.jar
+        echo "✅ 파일 이동 완료. 현재 파일 목록:"
+        ls -al
 
-    # 5. JAR 파일 전송 (변수명 HOST, USERNAME, KEY 로 복구)
+    # 5. JAR 파일 전송 (이제 경로 떼고 project.jar만 딱 보냄)
     - name: Copy JAR to EC2
       uses: appleboy/scp-action@master
       with:
@@ -44,18 +47,9 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.KEY }}
         port: 22
-        source: "backend/build/libs/backend-0.0.1-SNAPSHOT.jar"
+        source: "project.jar"
         target: "/home/ubuntu/app"
-        strip_components: 3
-
-    - name: Debug - Check File Existence
-      run: |
-        echo "=== 현재 디렉토리 위치 ==="
-        pwd
-        echo "=== backend 폴더 내용물 ==="
-        ls -al backend
-        echo "=== build 폴더 내용물 ==="
-        ls -R backend/build
+        # strip_components 옵션 삭제 (최상위 파일을 보내니까 필요 없음)
 
     # 6. deploy.sh 스크립트 전송
     - name: Copy Script to EC2
@@ -68,7 +62,7 @@ jobs:
         source: "deploy.sh"
         target: "/home/ubuntu/app"
 
-    # 7. 배포 스크립트 실행
+    # 7. 배포 스크립트 실행 (JAR 이름 변경에 맞춰 스크립트 내용 자동 수정)
     - name: Execute Deploy Script
       uses: appleboy/ssh-action@master
       with:
@@ -77,14 +71,16 @@ jobs:
         key: ${{ secrets.KEY }}
         port: 22
         script: |
-          # 1. 껍데기 파일(plain jar) 삭제
+          # 1. 기존 껍데기 파일 삭제
           rm -f /home/ubuntu/app/*-plain.jar
           
-          # 2. 윈도우 줄바꿈 문자 제거 (필수)
+          # 2. 윈도우 줄바꿈 문자 제거
           sed -i 's/\r$//' /home/ubuntu/app/deploy.sh
-          
-          # 3. 실행 권한 부여
           chmod +x /home/ubuntu/app/deploy.sh
           
-          # 4. 스크립트 실행
+          # 3. [중요] deploy.sh가 "project.jar"를 실행하도록 설정 강제 변경
+          # 기존의 JAR_NAME="..." 부분을 JAR_NAME="project.jar"로 바꿔치기함
+          sed -i 's/JAR_NAME=.*/JAR_NAME="project.jar"/' /home/ubuntu/app/deploy.sh
+          
+          # 4. 진짜 실행
           /home/ubuntu/app/deploy.sh
