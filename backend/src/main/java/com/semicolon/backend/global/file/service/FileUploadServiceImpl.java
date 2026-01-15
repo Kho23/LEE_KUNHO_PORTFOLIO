@@ -68,7 +68,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                 fileDataList.add(new FileResponseDTO(
                         fileMeta.getId(),
                         fileMeta.getFilePath(),
-                        "/upload"+domain+"/"+thumbnailFileName
+                        "/upload/"+domain+"/"+thumbnailFileName
                 ));
             }
             Map<String, Object> res = new HashMap<>(); //응답을 위한 Map 생성
