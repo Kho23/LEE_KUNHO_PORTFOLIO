@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
 import ProgramEditComponent from "./ProgramEditComponent";
-import ModalComponent from "../../../components/alertModal/AlertModalComponent";
 import { fileRegister } from "../../../api/fileApi";
 import { getOne } from "../../../api/programApi";
 import { programModify } from "../../../api/adminApi";
@@ -14,9 +12,7 @@ const initState = {
   uploadFiles: [],
 };
 
-const ProgramEditPage = () => {
-
-  const { id } = useParams();
+const ProgramEditPage = (id) => {
   const [program, setProgram] = useState(initState);
   const [fnoList, setFnoList] = useState([]);
   const [deletedFnoList, setDeletedFnoList] = useState([]);
