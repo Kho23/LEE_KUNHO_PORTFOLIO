@@ -20,7 +20,7 @@ public class FileController {
     private final FileUploadService service;
 
     @PostMapping("/{domain}")
-    public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile[] files, @PathVariable("domain") String domain){
+    public ResponseEntity<?> uploadFile(@RequestParam("files") MultipartFile[] files, @PathVariable("domain") String domain){
         return service.upload(files,domain);
     }
 }
