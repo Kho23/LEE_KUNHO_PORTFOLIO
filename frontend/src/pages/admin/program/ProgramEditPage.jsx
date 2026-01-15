@@ -65,7 +65,7 @@ const ProgramEditPage = () => {
     window.history.back();
   }
 
-  const submitHandler = async (program) => {
+  const submitHandler = async (e) => {
     e.preventDefault()
     const payload = {
       pno: program.pno,
