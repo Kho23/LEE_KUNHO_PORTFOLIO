@@ -41,7 +41,7 @@ const GalleryRegisterPageComponent = () => {
     } catch (error) {
       console.log("등록 중 오류 발생 오류내용=", error)
       alert("등록에 실패했습니다.")
-    }
+    } 
   }
   return (
     <div className="max-w-4xl mx-auto mt-10 px-4">

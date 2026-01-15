@@ -1,130 +1,102 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getOne } from "../../../api/programApi";
-import { programModify } from "../../../api/adminApi";
 import { useParams } from "react-router-dom";
 import ProgramEditComponent from "./ProgramEditComponent";
 import ModalComponent from "../../../components/alertModal/AlertModalComponent";
+import { fileRegister } from "../../../api/fileApi";
+import { getOne } from "../../../api/programApi";
 
 // 초기 상태 정의
 const initState = {
   content: "",
+  pno: 0,
   programName: "",
   uploadFiles: [],
 };
 
 const ProgramEditPage = () => {
-  const { programId } = useParams();
-  const programFiles = useRef(null);
-  // 프로그램 상세 정보 상태
-  const [data, setData] = useState(initState);
-  // 새로 추가한 파일 리스트
-  const [newfileList, setNewFileList] = useState([]);
-  // 삭제된 파일 ID 리스트
-  const [deletedFileIds, setDeletedFileIds] = useState([]);
-  // 모달 상태
-  const [alertModal, setAlertModal] = useState({
-    open: false,
-    type: "",
-    message: "",
-    onConfirm: null,
-  });
 
-  // 프로그램 상세 데이터 가져오기
+  const { id } = useParams();
+  const [program, setProgram] = useState(initState);
+  const [fnoList, setFnoList] = useState([]);
+  const [deletedFnoList, setDeletedFnoList] = useState([]);
   useEffect(() => {
-    const f = async () => {
+    const getProgram = async () => {
       try {
-        const res = await getOne(programId);
-        setData(res); // 가져온 데이터 상태에 저장
+        const res = await getOne(id);
+        setProgram(res)
       } catch (error) {
-        console.error("가져오기 실패", error);
+        console.log("error: ", error)
+        alert("프로그램 안내 조회 중 오류가 발생했습니다.")
       }
-    };
-    f();
-  }, [programId]);
-
-  // 파일 삭제 처리
-  const deleteHandler = (e) => {
-    const { name } = e.target;
-    setDeletedFileIds((prev) => [...prev, name]); // 삭제 리스트에 추가
-    const filtered = data.uploadFiles.filter((i) => i.fileNo != name); // 삭제 제외한 나머지 파일
-    setData({
-      ...data,
-      uploadFiles: filtered, // 상태 갱신
-    });
-  };
-
-  // 파일 업로드 처리
-  const fileUploadHandler = (e) => {
-    const { files } = e.target;
-    const fileList = [];
-    for (var i of files) {
-      fileList.push(i); // 선택한 파일 배열로 변환
     }
-    setNewFileList(fileList); // 상태에 저장
-  };
+    getProgram();
+  }, [id])
 
-  // 프로그램 수정 제출 처리
-  const submitHandler = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    const programUploadFile = programFiles.current.files;
 
-    // 새로 업로드한 파일 formData에 추가
-    for (var i of programUploadFile) {
-      formData.append("files", i);
+  const fileUploadHandler = async (e) => {
+    const files = e.target.files; // 요청 보내는 파일리스트
+    const image = new FormData();
+    if (files.length === 0 || !files) return;
+    for (const file of files) {
+      image.append("files", file) //파일 리스트를 image 에 담음
     }
+    try {
+      const res = await fileRegister(image, "program");
+      // 도메인으로 program 설정 후 파일목록 보내주고 Map<"fileData", {fno, ...} > 를 res로 받음
+      const newFiles = res.fileData;
+      const newFnoList = newFiles.map(file => file.fno); // fno 리스트 
+      setFnoList(prev => [...prev, ...newFnoList]); // 기존 파일번호 목록에서 새 파일번호 추가 
+      setProgram(prev => ({ ...prev, uploadFiles: [...prev.uploadFiles, ...newFiles] })) // 기존 프로그램의 파일에 새 파일 추가   
+    } catch (error) {
+      alert("프로그램 수정 중 오류가 발생했습니다.")
+      console.log("error: ", error);
+    }
+  }
 
-    // 기존 프로그램 데이터 formData에 추가
-    formData.append("pno", data.pno);
-    formData.append("content", data.content);
-    formData.append("programName", data.programName);
-    formData.append("deletedNo", deletedFileIds);
+  const deleteHandler = (fno) => {
+    setDeletedFnoList(prev => [...prev, fno]); // 삭제된 파일번호 목록 추가
+    setFnoList(prev => prev.filter(f => f !== fno)); // fno 목록에서는 삭제 된 번호 목록 제거
+    setProgram(prev => ({ ...prev, uploadFiles: prev.uploadFiles.filter(f => (f.fileNo || f.fno) !== fno) }))
+    // 기존 프로그램의 파일에서 삭제 눌림 fno 지우기
+  }
 
-    const f = async () => {
-      try {
-        setAlertModal({
-          open: true,
-          type: "confirm",
-          message: "내용을 수정하시겠습니까?",
-          onConfirm: async (i) => {
-            setAlertModal({ open: false });
-            if (i !== "ok") return; // 취소 시 종료
-            await programModify(programId, formData); // 서버로 전송
-            window.location.reload(); // 페이지 새로고침
-          },
-        });
-      } catch (error) {
-        console.error("보내기 실패", error);
-      }
-    };
-    f();
-  };
-
-  // 수정 취소 처리
   const cancelHandler = () => {
-    setAlertModal({
-      open: true,
-      type: "confirm",
-      message: "내용을 취소하시겠습니까?",
-      onConfirm: (i) => {
-        setAlertModal({ open: false });
-        if (i !== "ok") return;
-        window.location.reload();
-      },
-    });
-  };
+    window.history.back();
+  }
+
+  const submitHandler = async (program) => {
+    e.preventDefault()
+    const payload = {
+      pno: program.pno,
+      content: program.content,
+      programName: program.programName,
+      fnoList: fnoList,
+      deletedNo: deletedFnoList
+    }
+    try {
+      await programModify(payload);
+      alert("프로그램 수정이 완료되었습니다.")
+      window.location.reload()
+    } catch (error) {
+      console.log("error: ", error);
+      alert("프로그램 수정 중 오류가 발생했습니다.");
+    }
+
+
+  }
+
+
 
   return (
-    <div>
+   <div>
       <ProgramEditComponent
         submitHandler={submitHandler}
-        data={data}
-        setData={setData}
+        data={program}
+        setData={setProgram} // ✅ setData에 setProgram 연결
         fileUploadHandler={fileUploadHandler}
-        programFiles={programFiles}
         deleteHandler={deleteHandler}
-        newfileList={newfileList}
         cancelHandler={cancelHandler}
+        // 안 쓰는 props 제거함 (programFiles, newfileList)
       />
       {alertModal.open && (
         <ModalComponent
