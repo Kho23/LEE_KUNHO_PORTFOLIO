@@ -17,6 +17,10 @@ const ProgramEditPage = ({id}) => {
   const [fnoList, setFnoList] = useState([]);
   const [deletedFnoList, setDeletedFnoList] = useState([]);
   useEffect(() => {
+    if(!id){
+      setProgram(initState)
+      return;
+    }
     const getProgram = async () => {
       try {
         const res = await getOne(id);
