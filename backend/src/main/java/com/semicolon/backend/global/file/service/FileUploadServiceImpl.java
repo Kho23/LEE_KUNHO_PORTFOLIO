@@ -47,7 +47,6 @@ public class FileUploadServiceImpl implements FileUploadService {
                 String thumbnailFileName ="s_"+uniqueName+extension;//썸네일파일 저장경로
                 File thumbnailFile = new File(subDirPath+File.separator+thumbnailFileName);
                 file.transferTo(originalFile); // 원본파일 저장
-
                 FileMeta fileMeta = FileMeta.builder()
                         .originalName(originalName)
                         .savedName(originalFileName)

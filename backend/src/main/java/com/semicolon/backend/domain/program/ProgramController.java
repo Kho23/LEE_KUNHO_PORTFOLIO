@@ -31,8 +31,8 @@ public class ProgramController {
     @PutMapping("/{programId}")
     public ResponseEntity<String> update(@PathVariable("programId") long programId, @RequestBody ProgramReqDTO programDTO ){
         log.info("수정 ID확인 = > {}",programId);
-        ProgramDTO dto = service.getOne(programId);
-        if(dto.getPno()==programDTO.getPno()) service.update(programDTO);
+        programDTO.setPno(programId);
+        service.update(programDTO);
         return ResponseEntity.ok("수정 성공");
     }
 

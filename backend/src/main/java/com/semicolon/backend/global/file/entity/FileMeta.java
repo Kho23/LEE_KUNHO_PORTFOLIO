@@ -20,6 +20,7 @@ public class FileMeta {
     private String originalName; //원본 파일명
     private String savedName; // UUID 적용된 실제 저장된 파일명
     private String filePath; // 파일 접근 경로
+    private String thumbnailPath; // 썸네일 필요한 경우 사용
     private String fileType; // 확장자명 or MIME 타입
     private Long fileSize; // 파일 크기(용량제한 체크)
     private String domainType; // 테이블 구분용 notice gallery 등
