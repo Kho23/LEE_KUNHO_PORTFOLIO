@@ -12,7 +12,7 @@ const initState = {
   uploadFiles: [],
 };
 
-const ProgramEditPage = (id) => {
+const ProgramEditPage = ({id}) => {
   const [program, setProgram] = useState(initState);
   const [fnoList, setFnoList] = useState([]);
   const [deletedFnoList, setDeletedFnoList] = useState([]);

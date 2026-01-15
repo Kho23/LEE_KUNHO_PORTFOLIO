@@ -3,7 +3,7 @@ import ProgramEditPage from "../program/ProgramEditPage";
 import { useParams } from "react-router-dom";
 
 const ProgramAdminPage = () => {
-  const {id} = useParams()
+  const { id } = useParams()
   return (
     <div className="w-full flex min-h-screen">
       <div className="w-1/2 p-6 overflow-auto bg-white">
