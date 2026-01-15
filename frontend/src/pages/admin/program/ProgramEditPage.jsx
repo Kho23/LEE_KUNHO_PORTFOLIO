@@ -4,6 +4,7 @@ import ProgramEditComponent from "./ProgramEditComponent";
 import ModalComponent from "../../../components/alertModal/AlertModalComponent";
 import { fileRegister } from "../../../api/fileApi";
 import { getOne } from "../../../api/programApi";
+import { programModify } from "../../../api/adminApi";
 
 // 초기 상태 정의
 const initState = {
@@ -98,13 +99,6 @@ const ProgramEditPage = () => {
         cancelHandler={cancelHandler}
         // 안 쓰는 props 제거함 (programFiles, newfileList)
       />
-      {alertModal.open && (
-        <ModalComponent
-          type={alertModal.type}
-          message={alertModal.message}
-          onConfirm={alertModal.onConfirm}
-        />
-      )}
     </div>
   );
 };

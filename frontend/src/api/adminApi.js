@@ -2,8 +2,7 @@ import axios from "axios";
 const API_SERVER_HOST = "/api";
 
 export const programModify = async (data) => {
-  console.log("주소확인", programId);
-  var str = `${API_SERVER_HOST}/program/${programId}`;
+  var str = `${API_SERVER_HOST}/program/${data.pno}`;
   const res = await axios.put(str, data);
   console.log("backend로부터 온데이터 ", res.data);
   return res.data;
