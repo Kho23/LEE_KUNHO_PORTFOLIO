@@ -16,8 +16,8 @@ const ProgramEditComponent = ({
   // 서버 이미지 경로 처리 (http 포함 여부 등에 따라 조정 필요, 여기선 예시)
   const getImageUrl = (path) => {
     if (!path) return "";
-    if (path.startsWith("http")) return path;
-    return `http://localhost:8080${path}`; // 서버 도메인에 맞게 수정 필요
+    if (path.startsWith("https")) return path;
+    return `api/jeocenter.shop/${path}`; // 서버 도메인에 맞게 수정 필요
   };
 
   return (
