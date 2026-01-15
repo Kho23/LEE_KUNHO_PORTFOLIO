@@ -31,6 +31,10 @@ public class Program {
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgramUpload> uploads = new ArrayList<>();
 
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name = "cno")
+    private ProgramCategory category;
+
     public void removeFile(ProgramUpload file) {
         this.uploads.remove(file);
         file.setProgram(null);

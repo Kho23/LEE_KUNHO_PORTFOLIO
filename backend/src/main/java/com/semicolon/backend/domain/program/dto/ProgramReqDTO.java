@@ -18,5 +18,6 @@ public class ProgramReqDTO {
     private String programName;
     private List<String> deletedNo;
 
-    private MultipartFile[] files;
+    private List<Long> fnoList; //FileMeta 로 묶인 ID
+    private Long cno; // 카테고리 ID
 }

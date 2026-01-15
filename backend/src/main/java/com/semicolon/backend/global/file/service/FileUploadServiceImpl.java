@@ -1,5 +1,9 @@
 package com.semicolon.backend.global.file.service;
 
+import com.semicolon.backend.global.file.dto.FileResponseDTO;
+import com.semicolon.backend.global.file.entity.FileMeta;
+import com.semicolon.backend.global.file.repository.FileMetaRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,17 +19,20 @@ import java.nio.file.Path;
 import java.util.*;
 @Slf4j
 @Service
-public class FileUploadServiceImpl implements FileUploadService{
+@RequiredArgsConstructor
+public class FileUploadServiceImpl implements FileUploadService {
 
     @Value("${com.semicolon.backend.upload}")
     private String uploadDir;
+
+    private final FileMetaRepository fileMetaRepository;
 
     @Override
     public ResponseEntity<?> upload(MultipartFile[] files, String domain){
         if(files.length==0 || files==null) return ResponseEntity.badRequest().body("파일이 존재하지 않습니다.");
         //file 이 존재하지 않을 때 예외처리
         try {
-            List<Map<String,String>> fileDataList =new ArrayList<>();
+            List<FileResponseDTO> fileDataList =new ArrayList<>();
             String subDirPath = uploadDir+File.separator+domain; // 도메인으로 목적에 따라 다른 폴더에 저장
             File uploadDirectory = new File(subDirPath); //File 객체에 저장경로 생성자로 만들기
             if(!uploadDirectory.exists()) uploadDirectory.mkdirs(); // 파일경로가 존재하지 않으면 새로 만든다
@@ -40,6 +47,18 @@ public class FileUploadServiceImpl implements FileUploadService{
                 String thumbnailFileName ="s_"+uniqueName+extension;//썸네일파일 저장경로
                 File thumbnailFile = new File(subDirPath+File.separator+thumbnailFileName);
                 file.transferTo(originalFile); // 원본파일 저장
+
+                FileMeta fileMeta = FileMeta.builder()
+                        .originalName(originalName)
+                        .savedName(originalFileName)
+                        .filePath("/upload/" + domain + "/" + originalFileName)
+                        .domainType(domain.toUpperCase())
+                        .domainId(null)
+                        .fileType(extension)
+                        .fileSize(file.getSize())
+                        .build();
+                fileMetaRepository.save(fileMeta);
+
                 if(isImageFile(originalFile.toPath())){
                     try(FileOutputStream thumbnailOS = new FileOutputStream(thumbnailFile)){
                         Thumbnails.of(originalFile)
@@ -47,10 +66,11 @@ public class FileUploadServiceImpl implements FileUploadService{
                                 .toOutputStream(thumbnailOS);
                     }
                 }
-                Map<String, String> urls=new HashMap<>();
-                urls.put("imageUrl","/upload/"+domain+"/"+originalFileName);
-                urls.put("thumbnailUrl","/upload/"+domain+"/"+thumbnailFileName);
-                fileDataList.add(urls);
+                fileDataList.add(new FileResponseDTO(
+                        fileMeta.getId(),
+                        fileMeta.getFilePath(),
+                        "/upload"+domain+"/"+thumbnailFileName
+                ));
             }
             Map<String, Object> res = new HashMap<>(); //응답을 위한 Map 생성
             res.put("fileData", fileDataList); //웹에서 접근하는 URL 경로
@@ -84,7 +104,6 @@ public class FileUploadServiceImpl implements FileUploadService{
                 log.error("원본 파일 삭제 실패:{}",  e.getMessage());
             }
         }
-
         if (thumbnailPath != null && thumbnailPath.startsWith("/upload/")) {
             String relativePath = thumbnailPath.substring("/upload/".length());
             Path thumbnailFilePath = Path.of(uploadDir, relativePath);
