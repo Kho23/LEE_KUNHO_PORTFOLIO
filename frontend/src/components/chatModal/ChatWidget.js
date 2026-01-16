@@ -7,7 +7,6 @@ import {
   publishMessage,
 } from "../../api/socketApi";
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
-import { useSelector } from "react-redux";
 
 const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false); //모달 오픈여부
@@ -17,12 +16,11 @@ const ChatWidget = () => {
   const stompClient = useRef(null); //소켓 연결 객체
   const messagesEndRef = useRef(null); //스크롤 맨 아래로 내리기
 
-  // --- [Data] ---
   const cookieData = getCookie("member");
   const memberId = cookieData?.memberId;
   const token = cookieData?.accessToken;
+  const loginId = cookieData?.loginId
 
-  // --- [Logic] ---
   useEffect(() => {
     if (memberId && token) {
       connectSocket(
@@ -191,7 +189,7 @@ const ChatWidget = () => {
           </div>
 
           {messages.map((msg, index) => {
-            const isMyMessage = msg.sender === memberId;
+            const isMyMessage = msg.sender === loginId;
             return (
               <div
                 key={index}

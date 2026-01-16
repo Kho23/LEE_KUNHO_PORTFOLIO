@@ -55,6 +55,7 @@ public class FileUploadServiceImpl implements FileUploadService {
                         .domainId(null)
                         .fileType(extension)
                         .fileSize(file.getSize())
+                        .thumbnailPath("/upload/" + domain + "/s_" + originalFileName)
                         .build();
                 fileMetaRepository.save(fileMeta);
 
